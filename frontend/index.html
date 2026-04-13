@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volaris</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    :root {
+      --volaris-purple: #990078;
+      --volaris-purple-light: #E10098;
+      --volaris-dark: #121212;
+      --volaris-gray: #f8f9fa;
+      --volaris-text: #2d2d2d;
+      --volaris-muted: #6c757d;
+      --volaris-border: rgba(0,0,0,0.08);
+      --white: #FFFFFF;
+      --grad-main: linear-gradient(135deg, #990078 0%, #E10098 100%);
+      --grad-dark: linear-gradient(135deg, #2d2d2d 0%, #000000 100%);
+      --glass: rgba(255, 255, 255, 0.8);
+    }
+
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: linear-gradient(135deg, #db00ac 0%, #000000 100%);
+      color: var(--volaris-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+
+    #app {
+      min-height: 100vh;
+      background: radial-gradient(circle at top right, rgba(225, 0, 152, 0.05), transparent),
+                  radial-gradient(circle at bottom left, rgba(153, 0, 120, 0.05), transparent);
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--glass);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--volaris-border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; height: 80px;
+    }
+
+    .brand { display: flex; align-items: center; text-decoration: none; height: 100%; transition: opacity 0.3s; }
+    .brand:hover { opacity: 0.8; }
+    .volaris-logo-img { height: 50px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    
+    .nav-links { display: flex; gap: 8px; background: rgba(0,0,0,0.03); padding: 5px; border-radius: 50px; }
+    .nav-links a {
+      color: var(--volaris-dark); text-decoration: none;
+      font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 10px 24px; border-radius: 50px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-links a:hover { background: rgba(255,255,255,0.5); }
+    .nav-links a.on { background: var(--white); color: var(--volaris-purple); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    .hero { padding: 80px 5% 40px; text-align: center; }
+    .hero h1 {
+      font-size: 3rem; font-weight: 900; color: var(--volaris-gray);
+      margin-bottom: 40px; letter-spacing: -1.5px; line-height: 1.1;
+    }
+    .hero h1 span {
+      background: var(--grad-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .search-box {
+      background: var(--white);
+      border-radius: 24px; padding: 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+      max-width: 1100px; margin: 0 auto;
+      border: 1px solid var(--white);
+    }
+    .search-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1.2fr 1fr auto;
+      gap: 20px; align-items: end;
+    }
+    .sf label {
+      display: block; font-size: 0.75rem; font-weight: 900;
+      color: var(--volaris-muted); margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .sf input {
+      width: 100%; border: 1.5px solid #eee;
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 1rem; color: var(--volaris-text); outline: none;
+      transition: all 0.3s; background: #fafafa;
+    }
+    .sf input:focus { 
+      border-color: var(--volaris-purple-light); 
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(225,0,152,0.1); 
+    }
+
+    .btn-buscar {
+      background: var(--grad-dark);
+      color: var(--white); border: none;
+      border-radius: 12px; padding: 0 45px; height: 54px;
+      font-size: 0.9rem; font-weight: 900; text-transform: uppercase;
+      cursor: pointer; transition: all 0.3s;
+      letter-spacing: 1px;
+    }
+    .btn-buscar:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .btn-buscar:active { transform: translateY(0); }
+
+    main { max-width: 1100px; margin: 60px auto; padding: 0 20px; }
+    .section-title { 
+      font-weight: 900; font-size: 1.8rem; margin-bottom: 32px; 
+      display: flex; align-items: center; gap: 15px;
+      color: white;
+    }
+    .section-title::before {
+      content: ''; display: block; width: 8px; height: 32px;
+      background: var(--grad-main); border-radius: 10px;
+    }
+
+    .vuelo-card {
+      background: var(--white);
+      border-radius: 20px; margin-bottom: 24px;
+      display: grid; grid-template-columns: 180px 1fr 140px 240px;
+      align-items: center; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--volaris-border);
+      position: relative; overflow: hidden;
+    }
+    .vuelo-card:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+      border-color: rgba(153, 0, 120, 0.2);
+    }
+
+    .tarifa-tag {
+      background: linear-gradient(to bottom, #fafafa, #f5f5f5); height: 100%;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 30px; border-right: 1px solid #f0f0f0;
+    }
+    .tarifa-nombre { 
+      font-weight: 900; font-size: 1rem; color: var(--volaris-purple); 
+      background: rgba(153, 0, 120, 0.05); padding: 4px 12px; border-radius: 6px;
+      width: fit-content;
+    }
+    .tarifa-equip { font-size: 0.8rem; color: var(--volaris-muted); margin-top: 10px; line-height: 1.4; }
+
+    .ruta { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    .ruta-hora { font-size: 1.8rem; font-weight: 900; color: var(--volaris-dark); }
+    .ruta-cod { font-size: 0.95rem; font-weight: 700; color: var(--volaris-muted); margin-top: 4px; }
+    
+    .ruta-linea { flex: 1; margin: 0 30px; position: relative; }
+    .ruta-bar { height: 3px; background: #eee; border-radius: 10px; position: relative; }
+    .ruta-bar::after {
+      content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 50%;
+      background: var(--grad-main); border-radius: 10px;
+    }
+
+    .vuelo-asientos { text-align: center; border-left: 1px solid #f0f0f0; padding: 20px; }
+    .asientos-num { font-size: 1.2rem; font-weight: 900; color: #2ecc71; }
+    .asientos-num.poco { color: #e74c3c; }
+
+    .vuelo-precio {
+      padding: 30px; text-align: right;
+      background: linear-gradient(to right, #fff, #fdfbff); height: 100%;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .precio-val { font-size: 2rem; font-weight: 900; color: var(--volaris-dark); margin: 5px 0; }
+    .btn-reservar {
+      background: var(--grad-main); color: white; border: none;
+      padding: 14px 28px; font-weight: 900; cursor: pointer;
+      text-transform: uppercase; border-radius: 12px;
+      transition: all 0.3s; letter-spacing: 1px; font-size: 0.8rem;
+    }
+    .btn-reservar:hover { opacity: 0.9; transform: scale(1.02); }
+
+    .tabla-container { 
+      background: white; border-radius: 24px; overflow: hidden; 
+      border: 1px solid var(--volaris-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .tabla { width: 100%; border-collapse: collapse; }
+    .tabla th { text-align: left; padding: 20px 24px; background: #fafafa; color: var(--volaris-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+    .tabla td { padding: 24px; border-bottom: 1px solid #f5f5f5; font-size: 1rem; color: var(--volaris-dark); }
+
+    .overlay { 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+      backdrop-filter: blur(8px); display: flex; align-items: center; 
+      justify-content: center; z-index: 200; 
+    }
+    .modal { 
+      background: white; width: 90%; max-width: 540px; padding: 48px; 
+      border-radius: 32px; position: relative; 
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+    }
+    .btn-cerrar-modal { 
+      position: absolute; top: 24px; right: 24px; border: none; 
+      background: #f5f5f5; width: 36px; height: 36px; border-radius: 50%;
+      font-size: 0.8rem; cursor: pointer; transition: 0.3s;
+    }
+    .btn-cerrar-modal:hover { background: #eee; }
+    .modal h3 { font-size: 2rem; font-weight: 900; margin-bottom: 32px; letter-spacing: -1px; }
+    
+    .modal-input {
+      width: 100%; padding: 16px; border-radius: 12px;
+      border: 1.5px solid #eee; margin-bottom: 20px;
+      font-size: 1rem; outline: none; transition: 0.3s;
+    }
+    .modal-input:focus { border-color: var(--volaris-purple); }
+
+    .btn-confirmar { 
+      background: var(--grad-main); color: white; border: none; 
+      padding: 18px; width: 100%; font-weight: 900; cursor: pointer; 
+      text-transform: uppercase; border-radius: 14px; margin-top: 10px;
+      font-size: 0.9rem; letter-spacing: 1px; transition: 0.3s;
+    }
+    .btn-confirmar:hover { opacity: 0.9; box-shadow: 0 10px 20px rgba(153, 0, 120, 0.2); }
+
+    .exito-box { 
+      text-align: center;
+    }
+    .exito-icon {
+      width: 80px; height: 80px; background: #2ecc71; color: white;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .search-grid { grid-template-columns: 1fr; }
+      .vuelo-card { grid-template-columns: 1fr; }
+      .tarifa-tag, .vuelo-precio, .vuelo-asientos { border: none; border-bottom: 1px solid #f0f0f0; text-align: center; align-items: center; }
+      .ruta { padding: 40px 20px; }
+      .hero h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <nav>
+    <a class="brand" href="#">
+      <img src="https://logos-world.net/wp-content/uploads/2023/06/Volaris-Logo.png" alt="Volaris" class="volaris-logo-img" />
+    </a>
+    <div class="nav-links">
+      <a href="#" :class="{on: vista==='buscar'}" @click.prevent="vista='buscar'">Reservar</a>
+      <a href="#" :class="{on: vista==='reservas'}" @click.prevent="cargarReservas();vista='reservas'">Mis Viajes</a>
+    </div>
+  </nav>
+
+  <section class="hero" v-if="vista==='buscar'">
+    <h1>Vuela a los mejores<br>precios con <span>Volaris</span></h1>
+
+    <div class="search-box">
+      <div class="search-grid">
+        <div class="sf">
+          <label>Origen</label>
+          <input v-model="form.origen" type="text" placeholder="¿De dónde sales?" list="lista-origen" />
+          <datalist id="lista-origen"><option v-for="c in ciudades" :key="c" :value="c"></option></datalist>
+        </div>
+        <div class="sf">
+          <label>Destino</label>
+          <input v-model="form.destino" type="text" placeholder="¿A dónde vas?" list="lista-destino" />
+          <datalist id="lista-destino"><option v-for="c in ciudades" :key="c" :value="c"></option></datalist>
+        </div>
+        <div class="sf">
+          <label>Fecha de Salida</label>
+          <input v-model="form.fecha" type="date" :min="hoy" />
+        </div>
+        <button class="btn-buscar" @click="buscarVuelos" :disabled="cargando">
+          {{ cargando ? '...' : 'Buscar' }}
+        </button>
+      </div>
+      <div style="color:#e74c3c; font-size:0.8rem; margin-top:15px; font-weight:700" v-if="errorBusqueda">{{ errorBusqueda }}</div>
+    </div>
+  </section>
+
+  <main v-if="vista==='buscar'">
+    <div v-if="cargando" style="text-align:center; padding: 100px;">
+      <div style="font-weight:900; color:var(--volaris-purple); font-size:1.2rem;">Actualizando cielos...</div>
+    </div>
+
+    <div v-else-if="vuelos.length > 0">
+      <h2 class="section-title">Vuelos Disponibles</h2>
+      <div class="vuelo-card" v-for="v in vuelos" :key="v.id">
+        <div class="tarifa-tag">
+          <span class="tarifa-nombre">{{ v.tarifa }}</span>
+          <div class="tarifa-equip">{{ v.equipaje }}</div>
+        </div>
+        <div class="ruta">
+          <div>
+            <div class="ruta-hora">{{ v.salida }}</div>
+            <div class="ruta-cod">{{ v.codigoOrigen }}</div>
+          </div>
+          <div class="ruta-linea">
+            <div style="font-size:0.75rem; font-weight:700; color:#bbb; text-align:center; margin-bottom:8px">{{ v.duracion }}</div>
+            <div class="ruta-bar"></div>
+          </div>
+          <div>
+            <div class="ruta-hora">{{ v.llegada }}</div>
+            <div class="ruta-cod">{{ v.codigoDestino }}</div>
+          </div>
+        </div>
+        <div class="vuelo-asientos">
+          <div class="asientos-num" :class="{poco: v.asientosDisponibles < 10}">{{ v.asientosDisponibles }}</div>
+          <div style="font-size:0.7rem; font-weight:900; color:#bbb; text-transform:uppercase; margin-top:4px">Disponibles</div>
+        </div>
+        <div class="vuelo-precio">
+          <div style="font-size:0.75rem; font-weight:900; color:var(--volaris-muted); text-transform:uppercase">Desde</div>
+          <div class="precio-val">${{ v.precio.toLocaleString('es-MX') }}</div>
+          <button class="btn-reservar" @click="abrirModal(v)">Seleccionar</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="buscado" style="text-align:center; padding: 100px; background:white; border-radius:24px;">
+      <p style="font-weight:700; color:var(--volaris-muted)">No encontramos vuelos. Intenta una nueva búsqueda.</p>
+    </div>
+  </main>
+
+  <main v-if="vista==='reservas'">
+    <h2 class="section-title">Mis Reservas Confirmadas</h2>
+    <div v-if="cargandoReservas" style="text-align:center; padding:100px">Cargando viajes...</div>
+    <div v-else-if="reservas.length > 0" class="tabla-container">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Confirmación</th><th>Itinerario</th><th>Fecha</th><th>Pasajero</th><th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in reservas" :key="r._id">
+            <td style="font-weight:900; color:var(--volaris-purple)">{{ r.codigoVuelo }}</td>
+            <td style="font-weight:700">{{ r.origen }} <span style="color:#bbb; margin:0 5px">→</span> {{ r.destino }}</td>
+            <td>{{ r.fecha }}</td>
+            <td><strong>{{ r.pasajero?.nombre }}</strong><br><span style="font-size:0.8rem; color:var(--volaris-muted)">{{ r.pasajero?.correo }}</span></td>
+            <td style="font-weight:900; color:var(--volaris-dark)">${{ r.precio?.toLocaleString('es-MX') }} MXN</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-else style="text-align:center; padding: 100px; background:white; border-radius:24px;">
+      <p style="font-weight:700; color:var(--volaris-muted)">Aún no tienes vuelos reservados.</p>
+    </div>
+  </main>
+
+  <div class="overlay" v-if="modal.abierto" @click.self="modal.abierto=false">
+    <div class="modal">
+      <button class="btn-cerrar-modal" @click="modal.abierto=false">✕</button>
+
+      <div v-if="modal.exito" class="exito-box">
+        <div class="exito-icon">✓</div>
+        <h3>¡Vuelo Confirmado!</h3>
+        <p style="color:var(--volaris-muted); margin-bottom:30px">Tu reservación ha sido procesada exitosamente.</p>
+        <button class="btn-confirmar" @click="modal.abierto=false">Ver mis viajes</button>
+      </div>
+
+      <div v-else>
+        <h3>Pasajero</h3>
+        <div style="background:#fafafa; padding:24px; border-radius:20px; margin-bottom:32px; border:1.5px solid #eee;">
+          <div style="font-size:0.7rem; font-weight:900; color:var(--volaris-purple); text-transform:uppercase; margin-bottom:8px">Resumen de vuelo</div>
+          <strong style="font-size:1.1rem; display:block; margin-bottom:4px">{{ modal.vuelo?.origen }} a {{ modal.vuelo?.destino }}</strong>
+          <span style="font-size:0.9rem; color:var(--volaris-muted)">{{ modal.vuelo?.tarifa }} • ${{ modal.vuelo?.precio?.toLocaleString('es-MX') }} MXN</span>
+        </div>
+        
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:900; color:var(--volaris-muted); margin-bottom:8px; text-transform:uppercase">Nombre Completo</label>
+          <input v-model="modal.datos.nombre" type="text" class="modal-input" placeholder="Ej. Juan Pérez" />
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:900; color:var(--volaris-muted); margin-bottom:8px; text-transform:uppercase">Correo Electrónico</label>
+          <input v-model="modal.datos.correo" type="email" class="modal-input" placeholder="tu@email.com" />
+        </div>
+        
+        <p v-if="modal.error" style="color:#e74c3c; font-size:0.85rem; margin-bottom:20px; font-weight:700">{{ modal.error }}</p>
+        
+        <button class="btn-confirmar" @click="confirmarReserva" :disabled="modal.enviando">
+          {{ modal.enviando ? 'Validando...' : 'Confirmar Reservación' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    return {
+      vista: 'buscar',
+      hoy: `${yyyy}-${mm}-${dd}`,
+      form: { origen: '', destino: '', fecha: `${yyyy}-${mm}-${dd}` },
+      ciudades: ['Ciudad de México', 'Cancún', 'Guadalajara', 'Monterrey', 'Los Cabos', 'Tijuana'],
+      vuelos: [], reservas: [],
+      cargando: false, cargandoReservas: false,
+      buscado: false, errorBusqueda: '',
+      modal: {
+        abierto: false, vuelo: null,
+        datos: { nombre: '', correo: '' },
+        enviando: false, exito: false, error: ''
+      }
+    };
+  },
+  methods: {
+    async buscarVuelos() {
+      this.errorBusqueda = ''; this.cargando = true; this.buscado = true; this.vuelos = [];
+      const p = new URLSearchParams();
+      if (this.form.origen)  p.append('origen', this.form.origen);
+      if (this.form.destino) p.append('destino', this.form.destino);
+      if (this.form.fecha)   p.append('fecha', this.form.fecha);
+      try {
+        const r = await fetch(`http://localhost:3000/api/flights?${p}`);
+        const d = await r.json();
+        this.vuelos = d.vuelos || [];
+      } catch {
+        this.errorBusqueda = 'Servicio no disponible en este momento.';
+      } finally { this.cargando = false; }
+    },
+    abrirModal(vuelo) {
+      this.modal = { abierto: true, vuelo, datos: { nombre: '', correo: '' }, enviando: false, exito: false, error: '' };
+    },
+    async confirmarReserva() {
+      if (!this.modal.datos.nombre.trim() || !this.modal.datos.correo.trim()) {
+        this.modal.error = 'Completa tus datos para continuar.'; return;
+      }
+      this.modal.enviando = true;
+      try {
+        const r = await fetch('http://localhost:3000/api/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            codigoVuelo: this.modal.vuelo.id,
+            origen: this.modal.vuelo.origen,
+            destino: this.modal.vuelo.destino,
+            fecha: this.modal.vuelo.fecha,
+            tarifa: this.modal.vuelo.tarifa,
+            precio: this.modal.vuelo.precio,
+            pasajero: { nombre: this.modal.datos.nombre, correo: this.modal.datos.correo },
+            asientos: this.modal.vuelo.asientosDisponibles
+          })
+        });
+        if (!r.ok) throw new Error('No se pudo procesar la reserva.');
+        this.modal.exito = true;
+      } catch (e) {
+        this.modal.error = e.message;
+      } finally { this.modal.enviando = false; }
+    },
+    async cargarReservas() {
+      this.cargandoReservas = true;
+      try {
+        const r = await fetch('http://localhost:3000/api/reservas');
+        const d = await r.json();
+        this.reservas = d.reservas || [];
+      } catch { this.reservas = []; }
+      finally { this.cargandoReservas = false; }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

@@ -27,6 +27,8 @@ services:
       PORT: 3000
       MONGO_URI: mongodb://mongodb:27017/volaris
       NODE_ENV: production
+    ports:
+    -"3000:3000"
     volumes:
       - app_logs:/app/logs
     depends_on:

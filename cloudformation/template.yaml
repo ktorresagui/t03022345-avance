@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Infraestructura para Volaris - Sistema de Reservas de Vuelos. Crea EC2 y S3.
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t2.medium]
+    Description: Tipo de instancia EC2
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Key Pair para acceso SSH
+
+  BucketName:
+    Type: String
+    Default: volaris-backups-storage
+    Description: Nombre del bucket S3 (debe ser globalmente único)
+
+Resources:
+
+  VolarisS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      # Uso del bucket:
+      #   backups/db/    → respaldos de MongoDB
+      #   backups/logs/  → archivos de log comprimidos
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: LimpiezaAutomatica
+            Status: Enabled
+            ExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Proyecto
+          Value: Volaris
+
+  # Security Group
+  # -----------------------------------------------------------------
+  # Puertos necesarios para la aplicación:
+  #   22   → SSH. En producción limitar a tu IP: CidrIp: TU_IP/32
+  #          Usar 0.0.0.0/0 expone el servidor a internet completo
+  #          y facilita ataques de fuerza bruta.
+  #   8080 → Frontend (nginx), acceso público al sitio web.
+  #   80   → HTTP estándar, opcional para redirigir a 8080.
+  #   3000 → Backend Express. No exponer en producción; el frontend
+  #          hace proxy interno al backend sin necesidad de este puerto.
+  # -----------------------------------------------------------------
+  VolarisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group Volaris - acceso controlado a la aplicacion
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: "SSH - cambiar a IP especifica en produccion"
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+          Description: "Frontend nginx - acceso publico"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: "HTTP estandar"
+      Tags:
+        - Key: Proyecto
+          Value: Volaris
+
+  VolarisEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      ImageId: ami-0c02fb55956c7d316
+      SecurityGroups:
+        - !Ref VolarisSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp2
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y git
+          amazon-linux-extras install docker -y
+          service docker start
+          usermod -aG docker ec2-user
+          chkconfig docker on
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          echo "[$(date)] EC2 Volaris configurada" >> /var/log/volaris-setup.log
+      Tags:
+        - Key: Name
+          Value: Volaris-Server
+        - Key: Proyecto
+          Value: Volaris
+
+  VolarisEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref VolarisEC2
+
+Outputs:
+  IPPublica:
+    Description: IP pública de la instancia
+    Value: !Ref VolarisEIP
+
+  URLApp:
+    Description: URL de acceso
+    Value: !Sub "http://${VolarisEIP}:8080"
+
+  BucketS3:
+    Description: Bucket S3 creado
+    Value: !Ref VolarisS3Bucket
+
+  ComandoSSH:
+    Description: Comando SSH de acceso
+    Value: !Sub "ssh -i ${KeyPairName}.pem ec2-user@${VolarisEIP}"
